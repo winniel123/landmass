@@ -959,6 +959,7 @@ fn overlapping_agents_separate_the_same_way_every_run() {
         /* desired_speed= */ 1.0,
         /* max_speed= */ 1.0,
       );
+      // Seeds that follow the agents' ids, which must not cancel them out.
       agent.avoidance_tiebreak_seed = seed + index;
       let id = agents.insert(agent);
       agent_id_to_agent_node
@@ -986,4 +987,6 @@ fn overlapping_agents_separate_the_same_way_every_run() {
   assert_ne!(a, b, "the two agents leave in different directions");
   assert_eq!(desired_velocities(7), (a, b));
   assert_ne!(desired_velocities(8), (a, b));
+  let (c, d) = desired_velocities(1);
+  assert_ne!(c, d, "seeds 1 and 2 cancel out ids 1 and 2");
 }

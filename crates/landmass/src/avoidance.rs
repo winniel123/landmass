@@ -146,7 +146,11 @@ pub(crate) fn apply_avoidance_to_agents<CS: CoordinateSystem>(
       obstacle_margin: 0.0,
       time_horizon: agent_options.avoidance_time_horizon,
       obstacle_time_horizon: agent_options.obstacle_avoidance_time_horizon,
-      tiebreak_seed: agent.avoidance_tiebreak_seed ^ agent_id.data().as_ffi(),
+      // Spread the id over all 64 bits before combining, so that structured
+      // seeds (say, 1, 2, 3 for agents 1, 2, 3) never cancel it out.
+      tiebreak_seed: agent.avoidance_tiebreak_seed.wrapping_add(
+        agent_id.data().as_ffi().wrapping_mul(0x9E37_79B9_7F4A_7C15),
+      ),
     };
 
     let dodgy_agent = agent_id_to_dodgy_agent.get(&agent_id).unwrap();
