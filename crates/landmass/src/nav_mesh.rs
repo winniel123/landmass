@@ -1,6 +1,6 @@
 use std::{
   cmp::Ordering,
-  collections::{HashMap, HashSet},
+  collections::{BTreeMap, BTreeSet},
   marker::PhantomData,
   ops::Range,
 };
@@ -232,7 +232,7 @@ impl<CS: CoordinateSystem> NavigationMesh<CS> {
         edge_2: usize,
       },
     }
-    let mut connectivity_set = HashMap::new();
+    let mut connectivity_set = BTreeMap::new();
 
     for (polygon_index, polygon) in self.polygons.iter_mut().enumerate() {
       if polygon.len() < 3 {
@@ -320,8 +320,8 @@ impl<CS: CoordinateSystem> NavigationMesh<CS> {
       }
     }
 
-    let mut region_to_normalized_region = HashMap::new();
-    let mut used_type_indices = HashSet::new();
+    let mut region_to_normalized_region = BTreeMap::new();
+    let mut used_type_indices = BTreeSet::new();
 
     let mut polygons = self
       .polygons
@@ -583,7 +583,7 @@ pub(crate) struct Connectivity {
 }
 
 /// A reference to an edge on a navigation mesh.
-#[derive(PartialEq, Eq, Debug, Clone, Hash, Default)]
+#[derive(PartialEq, Eq, Debug, Clone, Hash, Default, PartialOrd, Ord)]
 pub(crate) struct MeshEdgeRef {
   /// The index of the polygon that this edge belongs to.
   pub(crate) polygon_index: usize,

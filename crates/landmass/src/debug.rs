@@ -427,7 +427,7 @@ pub struct ConstraintLine {
 
 #[cfg(feature = "debug-avoidance")]
 /// The kinds of constraint during avoidance.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ConstraintKind {
   /// The constraints from the original algorithm. This is either just all the
   /// constraints if the algorithm succeeded, or it is the constraints that

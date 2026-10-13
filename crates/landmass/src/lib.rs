@@ -19,7 +19,7 @@ use agent::{RepathResult, does_agent_need_repath};
 use glam::Vec3Swizzles;
 use path::PathIndex;
 use slotmap::DenseSlotMap;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use nav_data::NavigationData;
 
@@ -255,7 +255,7 @@ impl<CS: CoordinateSystem> Archipelago<CS> {
     &self,
     start_point: &SampledPoint<'_, CS>,
     end_point: &SampledPoint<'_, CS>,
-    override_type_index_costs: &HashMap<usize, f32>,
+    override_type_index_costs: &BTreeMap<usize, f32>,
     permitted_animation_links: PermittedAnimationLinks,
   ) -> Result<Vec<PathStep<CS>>, FindPathError> {
     query::find_path(
@@ -280,8 +280,8 @@ impl<CS: CoordinateSystem> Archipelago<CS> {
           .animation_link_max_vertical_distance(),
       );
 
-    let mut agent_id_to_agent_node = HashMap::new();
-    let mut agent_id_to_target_node = HashMap::new();
+    let mut agent_id_to_agent_node = BTreeMap::new();
+    let mut agent_id_to_target_node = BTreeMap::new();
 
     for (agent_id, agent) in self.agents.iter_mut() {
       if agent.paused {
@@ -326,7 +326,7 @@ impl<CS: CoordinateSystem> Archipelago<CS> {
       }
     }
 
-    let mut character_id_to_nav_mesh_point = HashMap::new();
+    let mut character_id_to_nav_mesh_point = BTreeMap::new();
     for (character_id, character) in self.characters.iter() {
       let character_point = match self.nav_data.sample_point(
         CS::to_landmass(&character.position),
@@ -340,7 +340,7 @@ impl<CS: CoordinateSystem> Archipelago<CS> {
       character_id_to_nav_mesh_point.insert(character_id, character_point);
     }
 
-    let mut agent_id_to_follow_path_indices = HashMap::new();
+    let mut agent_id_to_follow_path_indices = BTreeMap::new();
 
     for (agent_id, agent) in self.agents.iter_mut() {
       // Clear the animation link whether the agent is paused or not. If we

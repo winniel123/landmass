@@ -5,3 +5,7 @@ members = [
     "crates/landmass_rerecast",
 ]
 resolver = "2"
+
+# dodgy_2d with `AvoidanceOptions::tiebreak_seed`, which landmass sets.
+[patch.crates-io]
+dodgy_2d = { git = "https://github.com/winniel123/dodgy", rev = "f4d3638705061dfc0575bb402aaefb583a14eef1" }

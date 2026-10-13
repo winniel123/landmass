@@ -1,5 +1,5 @@
 use std::{
-  collections::{HashMap, HashSet},
+  collections::{BTreeMap, BTreeSet},
   f32::consts::PI,
   sync::Arc,
 };
@@ -26,7 +26,7 @@ fn find_path_between_nodes<CS: CoordinateSystem>(
   nav_data: &NavigationData<CS>,
   start_node: NodeRef,
   end_node: NodeRef,
-  override_type_index_to_cost: &HashMap<usize, f32>,
+  override_type_index_to_cost: &BTreeMap<usize, f32>,
 ) -> (Vec3, Vec3, PathResult) {
   let start_island = nav_data.get_island(start_node.island_id).unwrap();
   let start_point =
@@ -94,7 +94,7 @@ fn finds_path_in_archipelago() {
     nav_data,
     NodeRef { island_id, polygon_index: 0 },
     NodeRef { island_id, polygon_index: 2 },
-    &HashMap::new(),
+    &BTreeMap::new(),
   );
 
   assert_eq!(
@@ -115,7 +115,7 @@ fn finds_path_in_archipelago() {
     nav_data,
     NodeRef { island_id, polygon_index: 2 },
     NodeRef { island_id, polygon_index: 0 },
-    &HashMap::new(),
+    &BTreeMap::new(),
   );
 
   assert_eq!(
@@ -136,7 +136,7 @@ fn finds_path_in_archipelago() {
     nav_data,
     NodeRef { island_id, polygon_index: 3 },
     NodeRef { island_id, polygon_index: 0 },
-    &HashMap::new(),
+    &BTreeMap::new(),
   );
 
   assert_eq!(
@@ -205,7 +205,7 @@ fn finds_paths_on_two_islands() {
     nav_data,
     NodeRef { island_id: island_id_1, polygon_index: 0 },
     NodeRef { island_id: island_id_1, polygon_index: 2 },
-    &HashMap::new(),
+    &BTreeMap::new(),
   );
 
   assert_eq!(
@@ -226,7 +226,7 @@ fn finds_paths_on_two_islands() {
     nav_data,
     NodeRef { island_id: island_id_2, polygon_index: 0 },
     NodeRef { island_id: island_id_2, polygon_index: 2 },
-    &HashMap::new(),
+    &BTreeMap::new(),
   );
 
   assert_eq!(
@@ -296,7 +296,7 @@ fn no_path_between_disconnected_islands() {
       nav_data,
       NodeRef { island_id: island_id_1, polygon_index: 0 },
       NodeRef { island_id: island_id_2, polygon_index: 0 },
-      &HashMap::new(),
+      &BTreeMap::new(),
     )
     .2
     .path
@@ -308,7 +308,7 @@ fn no_path_between_disconnected_islands() {
       nav_data,
       NodeRef { island_id: island_id_2, polygon_index: 0 },
       NodeRef { island_id: island_id_1, polygon_index: 0 },
-      &HashMap::new(),
+      &BTreeMap::new(),
     )
     .2
     .path
@@ -371,13 +371,13 @@ fn find_path_across_connected_islands() {
         ((node_ref.island_id, link.destination_node.island_id), *link_id)
       })
     })
-    .collect::<HashMap<_, _>>();
+    .collect::<BTreeMap<_, _>>();
 
   let (start_point, end_point, path_result) = find_path_between_nodes(
     &archipelago.nav_data,
     NodeRef { island_id: island_id_1, polygon_index: 0 },
     NodeRef { island_id: island_id_5, polygon_index: 0 },
-    &HashMap::new(),
+    &BTreeMap::new(),
   );
 
   assert_eq!(
@@ -487,13 +487,13 @@ fn finds_path_across_different_islands() {
         ((node_ref.island_id, link.destination_node.island_id), *link_id)
       })
     })
-    .collect::<HashMap<_, _>>();
+    .collect::<BTreeMap<_, _>>();
 
   let (start_point, end_point, path_result) = find_path_between_nodes(
     &archipelago.nav_data,
     NodeRef { island_id: island_id_1, polygon_index: 0 },
     NodeRef { island_id: island_id_2, polygon_index: 1 },
-    &HashMap::new(),
+    &BTreeMap::new(),
   );
 
   assert_eq!(
@@ -564,7 +564,7 @@ fn aborts_early_for_unconnected_regions() {
       &archipelago.nav_data,
       NodeRef { island_id: island_id_1, polygon_index: 0 },
       NodeRef { island_id: island_id_2, polygon_index: 0 },
-      &HashMap::new(),
+      &BTreeMap::new(),
     )
     .2
     .path
@@ -579,7 +579,7 @@ fn aborts_early_for_unconnected_regions() {
     &archipelago.nav_data,
     NodeRef { island_id: island_id_1, polygon_index: 0 },
     NodeRef { island_id: island_id_2, polygon_index: 0 },
-    &HashMap::new(),
+    &BTreeMap::new(),
   );
 
   assert!(path_result.path.is_none());
@@ -650,7 +650,7 @@ fn detour_for_high_cost_path() {
     &archipelago.nav_data,
     NodeRef { island_id, polygon_index: 0 },
     NodeRef { island_id, polygon_index: 6 },
-    &HashMap::new(),
+    &BTreeMap::new(),
   );
 
   assert_eq!(
@@ -742,7 +742,7 @@ fn detour_for_high_cost_path_across_boundary_links() {
     &archipelago.nav_data,
     NodeRef { island_id: island_id_1, polygon_index: 0 },
     NodeRef { island_id: island_id_2, polygon_index: 0 },
-    &HashMap::new(),
+    &BTreeMap::new(),
   );
 
   assert_eq!(
@@ -838,7 +838,7 @@ fn fast_path_not_ignored_by_heuristic() {
     &archipelago.nav_data,
     NodeRef { island_id, polygon_index: 2 },
     NodeRef { island_id, polygon_index: 4 },
-    &HashMap::new(),
+    &BTreeMap::new(),
   );
 
   // The most direct route is [2, 3, 4], but there is a faster detour:
@@ -891,7 +891,7 @@ fn infinite_or_nan_cost_cannot_find_path_between_nodes() {
     &archipelago.nav_data,
     NodeRef { island_id, polygon_index: 0 },
     NodeRef { island_id, polygon_index: 2 },
-    &HashMap::new(),
+    &BTreeMap::new(),
   );
 
   assert_eq!(path_result.path, None);
@@ -903,7 +903,7 @@ fn infinite_or_nan_cost_cannot_find_path_between_nodes() {
     &archipelago.nav_data,
     NodeRef { island_id, polygon_index: 0 },
     NodeRef { island_id, polygon_index: 2 },
-    &HashMap::new(),
+    &BTreeMap::new(),
   );
 
   assert_eq!(path_result.path, None);
@@ -971,7 +971,7 @@ fn detour_for_overridden_high_cost_path() {
     &archipelago.nav_data,
     NodeRef { island_id, polygon_index: 0 },
     NodeRef { island_id, polygon_index: 6 },
-    &HashMap::from([(1, 10.0)]),
+    &BTreeMap::from([(1, 10.0)]),
   );
 
   assert_eq!(
@@ -1057,7 +1057,7 @@ fn big_node_does_not_skew_pathing() {
     &archipelago.nav_data,
     NodeRef { island_id, polygon_index: 0 },
     NodeRef { island_id, polygon_index: 3 },
-    &HashMap::default(),
+    &BTreeMap::default(),
   );
 
   assert_eq!(
@@ -1149,7 +1149,7 @@ fn start_and_end_point_influences_path() {
     start_point,
     NodeRef { island_id, polygon_index: 3 },
     end_point,
-    &HashMap::default(),
+    &BTreeMap::default(),
     PermittedAnimationLinks::All,
   );
 
@@ -1253,7 +1253,7 @@ fn animation_link_is_used() {
     start_point,
     NodeRef { island_id, polygon_index: 4 },
     end_point,
-    &HashMap::default(),
+    &BTreeMap::default(),
     PermittedAnimationLinks::All,
   );
 
@@ -1355,7 +1355,7 @@ fn animation_link_is_used_if_cheaper() {
     start_point,
     NodeRef { island_id, polygon_index: 4 },
     end_point,
-    &HashMap::default(),
+    &BTreeMap::default(),
     PermittedAnimationLinks::All,
   );
 
@@ -1392,7 +1392,7 @@ fn animation_link_is_used_if_cheaper() {
     start_point,
     NodeRef { island_id, polygon_index: 4 },
     end_point,
-    &HashMap::default(),
+    &BTreeMap::default(),
     PermittedAnimationLinks::All,
   );
 
@@ -1489,8 +1489,8 @@ fn animation_link_is_not_used_if_not_permitted() {
     start_point,
     NodeRef { island_id, polygon_index: 4 },
     end_point,
-    &HashMap::default(),
-    PermittedAnimationLinks::Kinds(Arc::new(HashSet::from([]))),
+    &BTreeMap::default(),
+    PermittedAnimationLinks::Kinds(Arc::new(BTreeSet::from([]))),
   );
 
   // Despite there being an animation link that could take us all the way to the

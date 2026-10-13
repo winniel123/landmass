@@ -1,4 +1,4 @@
-use std::{collections::HashMap, f32::consts::PI, fmt::Debug, sync::Arc};
+use std::{collections::BTreeMap, f32::consts::PI, fmt::Debug, sync::Arc};
 
 use glam::{Vec2, Vec3};
 use googletest::{
@@ -655,7 +655,7 @@ fn finds_path() {
     archipelago.find_path(
       &start_point,
       &end_point,
-      &HashMap::new(),
+      &BTreeMap::new(),
       PermittedAnimationLinks::All,
     ),
     Ok(vec![

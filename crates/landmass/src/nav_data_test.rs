@@ -1,6 +1,6 @@
 use std::{
   cmp::Ordering,
-  collections::{HashMap, HashSet},
+  collections::{BTreeMap, BTreeSet},
   f32::consts::PI,
   sync::Arc,
 };
@@ -139,7 +139,7 @@ fn node_ref_to_num(node_ref: &NodeRef, island_order: &[IslandId]) -> u32 {
 
 fn clone_sort_round_links(
   boundary_links: &SlotMap<OffMeshLinkId, OffMeshLink>,
-  node_to_boundary_link_ids: &HashMap<NodeRef, HashSet<OffMeshLinkId>>,
+  node_to_boundary_link_ids: &BTreeMap<NodeRef, BTreeSet<OffMeshLinkId>>,
   island_order: &[IslandId],
   round_amount: f32,
 ) -> Vec<(NodeRef, Vec<OffMeshLink>)> {
@@ -254,8 +254,8 @@ fn link_edges_between_islands_links_touching_islands() {
   let island_2_edge_bbh = island_edges_bbh(&island_2);
 
   let mut boundary_links = SlotMap::with_key();
-  let mut node_to_boundary_link_ids = HashMap::new();
-  let mut modified_node_refs_to_update = HashSet::new();
+  let mut node_to_boundary_link_ids = BTreeMap::new();
+  let mut modified_node_refs_to_update = BTreeSet::new();
 
   link_edges_between_islands(
     (island_1_id, &island_1),
@@ -480,8 +480,8 @@ fn link_edges_between_islands_links_touching_islands() {
   );
 
   boundary_links = SlotMap::with_key();
-  node_to_boundary_link_ids = HashMap::new();
-  modified_node_refs_to_update = HashSet::new();
+  node_to_boundary_link_ids = BTreeMap::new();
+  modified_node_refs_to_update = BTreeSet::new();
 
   link_edges_between_islands(
     (island_2_id, &island_2),
@@ -735,8 +735,8 @@ fn update_links_islands_and_unlinks_on_delete() {
 }
 
 fn clone_sort_round_modified_nodes(
-  modified_nodes: &HashMap<NodeRef, ModifiedNode>,
-  island_id_to_vertices: &HashMap<IslandId, usize>,
+  modified_nodes: &BTreeMap<NodeRef, ModifiedNode>,
+  island_id_to_vertices: &BTreeMap<IslandId, usize>,
   island_order: &[IslandId],
   round_amount: f32,
 ) -> Vec<(NodeRef, ModifiedNode)> {
@@ -866,7 +866,7 @@ fn modifies_node_boundaries_for_linked_islands() {
   assert_eq!(
     clone_sort_round_modified_nodes(
       &nav_data.modified_nodes,
-      &HashMap::from([(island_1_id, 6), (island_2_id, 6), (island_3_id, 6)]),
+      &BTreeMap::from([(island_1_id, 6), (island_2_id, 6), (island_3_id, 6)]),
       &[island_1_id, island_2_id, island_3_id],
       1e-4
     ),
@@ -1229,18 +1229,18 @@ fn permitted_animation_link_blocks_region_connectivity() {
   expect_true!(nav_data.are_nodes_connected(
     NodeRef { island_id: island_1, polygon_index: 0 },
     NodeRef { island_id: island_2, polygon_index: 0 },
-    PermittedAnimationLinks::Kinds(Arc::new(HashSet::from([0]))),
+    PermittedAnimationLinks::Kinds(Arc::new(BTreeSet::from([0]))),
   ));
   expect_true!(nav_data.are_nodes_connected(
     NodeRef { island_id: island_1, polygon_index: 0 },
     NodeRef { island_id: island_2, polygon_index: 0 },
-    PermittedAnimationLinks::Kinds(Arc::new(HashSet::from([1]))),
+    PermittedAnimationLinks::Kinds(Arc::new(BTreeSet::from([1]))),
   ));
   // Using neither link cases the nodes to be unconnected.
   expect_false!(nav_data.are_nodes_connected(
     NodeRef { island_id: island_1, polygon_index: 0 },
     NodeRef { island_id: island_2, polygon_index: 0 },
-    PermittedAnimationLinks::Kinds(Arc::new(HashSet::from([2]))),
+    PermittedAnimationLinks::Kinds(Arc::new(BTreeSet::from([2]))),
   ));
 }
 

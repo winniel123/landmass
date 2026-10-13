@@ -1,4 +1,4 @@
-use std::{collections::HashSet, f32::consts::PI, sync::Arc};
+use std::{collections::BTreeSet, f32::consts::PI, sync::Arc};
 
 use glam::{Vec2, Vec3};
 use googletest::{expect_that, matchers::*};
@@ -885,34 +885,34 @@ fn path_not_valid_for_invalidated_islands_or_off_mesh_links() {
   };
 
   assert!(path.is_valid(
-    /* invalidated_boundary_links= */ &HashSet::new(),
-    /* invalidated_islands= */ &HashSet::new()
+    /* invalidated_boundary_links= */ &BTreeSet::new(),
+    /* invalidated_islands= */ &BTreeSet::new()
   ));
 
   // Each island is invalidated.
   assert!(!path.is_valid(
-    /* invalidated_boundary_links= */ &HashSet::new(),
-    /* invalidated_islands= */ &HashSet::from([island_id_1]),
+    /* invalidated_boundary_links= */ &BTreeSet::new(),
+    /* invalidated_islands= */ &BTreeSet::from([island_id_1]),
   ));
   assert!(!path.is_valid(
-    /* invalidated_boundary_links= */ &HashSet::new(),
-    /* invalidated_islands= */ &HashSet::from([island_id_2]),
+    /* invalidated_boundary_links= */ &BTreeSet::new(),
+    /* invalidated_islands= */ &BTreeSet::from([island_id_2]),
   ));
   assert!(!path.is_valid(
-    /* invalidated_boundary_links= */ &HashSet::new(),
-    /* invalidated_islands= */ &HashSet::from([island_id_3]),
+    /* invalidated_boundary_links= */ &BTreeSet::new(),
+    /* invalidated_islands= */ &BTreeSet::from([island_id_3]),
   ));
 
   // Each boundary link is invalidated.
   assert!(!path.is_valid(
     /* invalidated_boundary_links= */
-    &HashSet::from([boundary_link_id_1]),
-    /* invalidated_islands= */ &HashSet::new(),
+    &BTreeSet::from([boundary_link_id_1]),
+    /* invalidated_islands= */ &BTreeSet::new(),
   ));
   assert!(!path.is_valid(
     /* invalidated_boundary_links= */
-    &HashSet::from([boundary_link_id_2]),
-    /* invalidated_islands= */ &HashSet::new(),
+    &BTreeSet::from([boundary_link_id_2]),
+    /* invalidated_islands= */ &BTreeSet::new(),
   ));
 }
 

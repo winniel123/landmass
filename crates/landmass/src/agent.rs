@@ -1,5 +1,5 @@
 use std::{
-  collections::{HashMap, HashSet},
+  collections::{BTreeMap, BTreeSet},
   sync::Arc,
 };
 
@@ -84,12 +84,18 @@ pub struct Agent<CS: CoordinateSystem> {
   /// it can reuse that path if it is still valid and relevant (the agent still
   /// wants to go to the same place).
   pub paused: bool,
+  /// Picks the way out when this agent is exactly on top of another with
+  /// exactly the same velocity, where any direction is as good as another. It
+  /// is combined with the agent's [`AgentId`], so agents keeping the default
+  /// still separate. The same seeds, agents and updates always give the same
+  /// velocities.
+  pub avoidance_tiebreak_seed: u64,
   #[cfg(feature = "debug-avoidance")]
   /// If true, avoidance debug data will be stored during update iterations.
   /// This can later be used for visualization.
   pub keep_avoidance_data: bool,
   /// Overrides for the "default" costs of each type index.
-  pub(crate) override_type_index_to_cost: HashMap<usize, f32>,
+  pub(crate) override_type_index_to_cost: BTreeMap<usize, f32>,
   /// The current path of the agent. None if a path is unavailable or a new
   /// path has not been computed yet (i.e., no path).
   pub(crate) current_path: Option<Path>,
@@ -172,7 +178,7 @@ pub enum PermittedAnimationLinks {
   #[default]
   All,
   /// Only animation links whose kind is in this set are permitted.
-  Kinds(Arc<HashSet<usize>>),
+  Kinds(Arc<BTreeSet<usize>>),
 }
 
 impl PermittedAnimationLinks {
@@ -206,9 +212,10 @@ impl<CS: CoordinateSystem> Agent<CS> {
       animation_link_reached_distance: None,
       permitted_animation_links: PermittedAnimationLinks::All,
       paused: false,
+      avoidance_tiebreak_seed: 0,
       #[cfg(feature = "debug-avoidance")]
       keep_avoidance_data: false,
-      override_type_index_to_cost: HashMap::new(),
+      override_type_index_to_cost: BTreeMap::new(),
       current_path: None,
       current_desired_move: CS::from_landmass(&Vec3::ZERO),
       state: AgentState::Idle,
@@ -426,8 +433,8 @@ pub(crate) fn does_agent_need_repath<CS: CoordinateSystem>(
   agent: &Agent<CS>,
   agent_node: Option<NodeRef>,
   target_node: Option<NodeRef>,
-  invalidated_off_mesh_links: &HashSet<OffMeshLinkId>,
-  invalidated_islands: &HashSet<IslandId>,
+  invalidated_off_mesh_links: &BTreeSet<OffMeshLinkId>,
+  invalidated_islands: &BTreeSet<IslandId>,
 ) -> RepathResult {
   if agent.current_target.is_none() {
     if agent.current_path.is_some() {

@@ -1,7 +1,6 @@
 use std::{
   cmp::Reverse,
-  collections::{BinaryHeap, HashMap},
-  hash::Hash,
+  collections::{BTreeMap, BinaryHeap},
 };
 
 /// A generic A* problem.
@@ -9,7 +8,7 @@ pub(crate) trait AStarProblem {
   /// The action that allows moving between states.
   type ActionType: Clone;
   /// The state that agents try to optimize.
-  type StateType: Hash + Eq + Clone;
+  type StateType: Ord + Clone;
 
   /// Creates the initial state for the problem.
   fn initial_state(&self) -> Self::StateType;
@@ -128,7 +127,7 @@ pub(crate) fn find_path<ProblemType: AStarProblem>(
 ) -> PathResult<ProblemType::ActionType> {
   let mut stats = PathStats { explored_nodes: 0 };
 
-  let mut best_estimates = HashMap::new();
+  let mut best_estimates = BTreeMap::new();
 
   let mut all_nodes = Vec::<Node<ProblemType>>::new();
   let mut open_nodes = BinaryHeap::new();
@@ -138,7 +137,7 @@ pub(crate) fn find_path<ProblemType: AStarProblem>(
     node: Node<ProblemType>,
     all_nodes: &mut Vec<Node<ProblemType>>,
     open_nodes: &mut BinaryHeap<Reverse<NodeRef>>,
-    best_estimates: &mut HashMap<ProblemType::StateType, f32>,
+    best_estimates: &mut BTreeMap<ProblemType::StateType, f32>,
   ) {
     let estimate = node.cost + problem.heuristic(&node.state);
     let best_estimate =

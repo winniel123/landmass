@@ -1,6 +1,6 @@
 use std::{
   borrow::Cow,
-  collections::{HashMap, HashSet},
+  collections::{BTreeMap, BTreeSet},
 };
 
 use glam::Vec3;
@@ -32,7 +32,7 @@ struct ArchipelagoPathProblem<'a, CS: CoordinateSystem> {
   /// since it is constant for the whole problem.
   cheapest_type_index_cost: f32,
   /// Replacement costs for the `nav_data.type_index_to_cost`.
-  override_type_index_to_cost: &'a HashMap<usize, f32>,
+  override_type_index_to_cost: &'a BTreeMap<usize, f32>,
   /// The set of permitted animation links for the agent.
   permitted_animation_links: PermittedAnimationLinks,
 }
@@ -51,7 +51,7 @@ enum PathStep {
 
 /// A node in the path. This generally corresponds to an edge in the navigation
 /// data.
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 enum PathNode {
   /// The start of the path.
   Start,
@@ -145,7 +145,7 @@ impl<CS: CoordinateSystem> AStarProblem for ArchipelagoPathProblem<'_, CS> {
       .nav_data
       .node_to_off_mesh_link_ids
       .get(&node_ref)
-      .map_or(Cow::Owned(HashSet::new()), Cow::Borrowed);
+      .map_or(Cow::Owned(BTreeSet::new()), Cow::Borrowed);
 
     let current_node_cost = self.type_index_to_cost(polygon.type_index);
 
@@ -280,7 +280,7 @@ pub(crate) fn find_path<CS: CoordinateSystem>(
   start_point: Vec3,
   end_node: NodeRef,
   end_point: Vec3,
-  override_type_index_to_cost: &HashMap<usize, f32>,
+  override_type_index_to_cost: &BTreeMap<usize, f32>,
   permitted_animation_links: PermittedAnimationLinks,
 ) -> PathResult {
   if !nav_data.are_nodes_connected(

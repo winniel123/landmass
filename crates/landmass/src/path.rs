@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, collections::HashSet};
+use std::{cmp::Ordering, collections::BTreeSet};
 
 use glam::{Vec3, Vec3Swizzles};
 
@@ -380,8 +380,8 @@ impl Path {
   /// invalidated.
   pub(crate) fn is_valid(
     &self,
-    invalidated_off_mesh_links: &HashSet<OffMeshLinkId>,
-    invalidated_islands: &HashSet<IslandId>,
+    invalidated_off_mesh_links: &BTreeSet<OffMeshLinkId>,
+    invalidated_islands: &BTreeSet<IslandId>,
   ) -> bool {
     for island_segment in self.island_segments.iter() {
       if invalidated_islands.contains(&island_segment.island_id) {

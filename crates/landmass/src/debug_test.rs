@@ -754,7 +754,7 @@ fn fails_to_draw_dirty_archipelago() {
 fn draws_avoidance_data_when_requested() {
   use glam::Vec2;
   use googletest::{matcher::MatcherResult, prelude::*};
-  use std::collections::HashMap;
+  use std::collections::BTreeMap;
 
   use crate::{
     AgentId,
@@ -814,7 +814,7 @@ fn draws_avoidance_data_when_requested() {
   archipelago.update(/* delta_time= */ 1.0);
 
   struct FakeAvoidanceDrawer(
-    HashMap<AgentId, HashMap<ConstraintKind, Vec<ConstraintLine>>>,
+    BTreeMap<AgentId, BTreeMap<ConstraintKind, Vec<ConstraintLine>>>,
   );
 
   impl AvoidanceDrawer for FakeAvoidanceDrawer {

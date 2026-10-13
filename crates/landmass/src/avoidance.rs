@@ -1,9 +1,9 @@
-use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, BinaryHeap};
 
 use dodgy_2d::VisibilitySet;
 use glam::{Vec3, Vec3Swizzles};
 use kdtree::{KdTree, distance::squared_euclidean};
-use slotmap::DenseSlotMap;
+use slotmap::{DenseSlotMap, Key};
 
 use crate::{
   Agent, AgentId, AgentState, ArchipelagoOptions, Character, CharacterId,
@@ -15,9 +15,9 @@ use crate::{
 /// be positive.
 pub(crate) fn apply_avoidance_to_agents<CS: CoordinateSystem>(
   agents: &mut DenseSlotMap<AgentId, Agent<CS>>,
-  agent_id_to_agent_node: &HashMap<AgentId, (Vec3, NodeRef)>,
+  agent_id_to_agent_node: &BTreeMap<AgentId, (Vec3, NodeRef)>,
   characters: &DenseSlotMap<CharacterId, Character<CS>>,
-  character_id_to_nav_mesh_point: &HashMap<CharacterId, Vec3>,
+  character_id_to_nav_mesh_point: &BTreeMap<CharacterId, Vec3>,
   nav_data: &NavigationData<CS>,
   agent_options: &ArchipelagoOptions<CS>,
   mut delta_time: f32,
@@ -28,7 +28,7 @@ pub(crate) fn apply_avoidance_to_agents<CS: CoordinateSystem>(
     delta_time = 1.0;
   }
 
-  let mut agent_id_to_dodgy_agent = HashMap::new();
+  let mut agent_id_to_dodgy_agent = BTreeMap::new();
   let mut agent_kdtree = KdTree::new(/* dimensions= */ 3);
   let mut agent_max_radius = 0.0f32;
 
@@ -146,6 +146,7 @@ pub(crate) fn apply_avoidance_to_agents<CS: CoordinateSystem>(
       obstacle_margin: 0.0,
       time_horizon: agent_options.avoidance_time_horizon,
       obstacle_time_horizon: agent_options.obstacle_avoidance_time_horizon,
+      tiebreak_seed: agent.avoidance_tiebreak_seed ^ agent_id.data().as_ffi(),
     };
 
     let dodgy_agent = agent_id_to_dodgy_agent.get(&agent_id).unwrap();
@@ -194,7 +195,7 @@ fn nav_mesh_borders_to_dodgy_obstacles<CS: CoordinateSystem>(
   let distance_limit = distance_limit * distance_limit;
 
   let mut visibility_set = VisibilitySet::new();
-  let mut border_edges = HashMap::new();
+  let mut border_edges = BTreeMap::new();
   let mut new_vertices = Vec::new();
 
   struct ExploreNode {
@@ -221,7 +222,7 @@ fn nav_mesh_borders_to_dodgy_obstacles<CS: CoordinateSystem>(
     }
   }
 
-  let mut explored_nodes = HashSet::new();
+  let mut explored_nodes = BTreeSet::new();
   let mut next_nodes = BinaryHeap::new();
   next_nodes.push(ExploreNode { node: agent_node.1, score: 0.0 });
 
@@ -251,8 +252,8 @@ fn nav_mesh_borders_to_dodgy_obstacles<CS: CoordinateSystem>(
     let off_mesh_links = nav_data.node_to_off_mesh_link_ids.get(&node);
     let modified_node = nav_data.modified_nodes.get(&node);
 
-    let mut remaining_edges: HashSet<usize> =
-      HashSet::from_iter(0..polygon.vertices.len());
+    let mut remaining_edges: BTreeSet<usize> =
+      BTreeSet::from_iter(0..polygon.vertices.len());
     for (vertex_1, vertex_2, node_ref) in polygon
       .connectivity
       .iter()

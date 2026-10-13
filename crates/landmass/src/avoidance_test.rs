@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::BTreeMap, sync::Arc};
 
 use glam::{Vec2, Vec3};
 use slotmap::DenseSlotMap;
@@ -443,7 +443,7 @@ fn applies_no_avoidance_for_far_agents() {
     agent
   });
 
-  let mut agent_id_to_agent_node = HashMap::new();
+  let mut agent_id_to_agent_node = BTreeMap::new();
   agent_id_to_agent_node.insert(
     agent_1,
     (
@@ -464,7 +464,7 @@ fn applies_no_avoidance_for_far_agents() {
     &mut agents,
     &agent_id_to_agent_node,
     /* characters= */ &DenseSlotMap::with_key(),
-    /* character_id_to_nav_mesh_point= */ &HashMap::new(),
+    /* character_id_to_nav_mesh_point= */ &BTreeMap::new(),
     &nav_data,
     &ArchipelagoOptions {
       neighbourhood: 5.0,
@@ -533,7 +533,7 @@ fn applies_avoidance_for_two_agents() {
     agent
   });
 
-  let mut agent_id_to_agent_node = HashMap::new();
+  let mut agent_id_to_agent_node = BTreeMap::new();
   agent_id_to_agent_node.insert(
     agent_1,
     (
@@ -553,7 +553,7 @@ fn applies_avoidance_for_two_agents() {
     &mut agents,
     &agent_id_to_agent_node,
     /* characters= */ &DenseSlotMap::with_key(),
-    /* character_id_to_nav_mesh_point= */ &HashMap::new(),
+    /* character_id_to_nav_mesh_point= */ &BTreeMap::new(),
     &nav_data,
     &ArchipelagoOptions {
       neighbourhood: 15.0,
@@ -623,7 +623,7 @@ fn agent_avoids_character() {
     radius: 1.0,
   });
 
-  let mut agent_id_to_agent_node = HashMap::new();
+  let mut agent_id_to_agent_node = BTreeMap::new();
   agent_id_to_agent_node.insert(
     agent,
     (
@@ -631,7 +631,7 @@ fn agent_avoids_character() {
       NodeRef { island_id, polygon_index: 0 },
     ),
   );
-  let mut character_id_to_nav_mesh_point = HashMap::new();
+  let mut character_id_to_nav_mesh_point = BTreeMap::new();
   character_id_to_nav_mesh_point
     .insert(character, characters.get(character).unwrap().position);
 
@@ -699,7 +699,7 @@ fn agent_speeds_up_to_avoid_character() {
     agent
   });
 
-  let mut agent_id_to_agent_node = HashMap::new();
+  let mut agent_id_to_agent_node = BTreeMap::new();
   agent_id_to_agent_node.insert(
     agent,
     (
@@ -712,7 +712,7 @@ fn agent_speeds_up_to_avoid_character() {
     &mut agents,
     &agent_id_to_agent_node,
     &DenseSlotMap::with_key(),
-    &HashMap::new(),
+    &BTreeMap::new(),
     &nav_data,
     &ArchipelagoOptions {
       neighbourhood: 15.0,
@@ -734,7 +734,7 @@ fn agent_speeds_up_to_avoid_character() {
     velocity: Vec2::new(0.0, -1.0),
     radius: 0.5,
   });
-  let mut character_id_to_nav_mesh_point = HashMap::new();
+  let mut character_id_to_nav_mesh_point = BTreeMap::new();
   character_id_to_nav_mesh_point
     .insert(character, characters.get(character).unwrap().position.extend(0.0));
 
@@ -922,4 +922,68 @@ fn switching_nav_mesh_to_fewer_vertices_does_not_result_in_panic() {
   archipelago.get_island_mut(island_1).unwrap().set_nav_mesh(simplified_mesh);
 
   archipelago.update(0.01);
+}
+
+#[test]
+fn overlapping_agents_separate_the_same_way_every_run() {
+  // Two agents exactly on top of each other with the same velocity: any way
+  // apart is as good as another, so the tiebreak seed picks it.
+  fn desired_velocities(seed: u64) -> (Vec3, Vec3) {
+    let nav_mesh = NavigationMesh {
+      vertices: vec![
+        Vec3::new(-5.0, -5.0, 0.0),
+        Vec3::new(5.0, -5.0, 0.0),
+        Vec3::new(5.0, 5.0, 0.0),
+        Vec3::new(-5.0, 5.0, 0.0),
+      ],
+      polygons: vec![vec![0, 1, 2, 3]],
+      polygon_type_indices: vec![0],
+      height_mesh: None,
+    }
+    .validate()
+    .expect("Validation succeeded.");
+
+    let mut nav_data = NavigationData::<XYZ>::new();
+    let island_id = nav_data.add_island(Island::new(
+      Transform { translation: Vec3::ZERO, rotation: 0.0 },
+      Arc::new(nav_mesh),
+    ));
+
+    let mut agents = DenseSlotMap::<AgentId, _>::with_key();
+    let mut agent_id_to_agent_node = BTreeMap::new();
+    let ids = [0, 1].map(|index| {
+      let mut agent = Agent::create(
+        /* position= */ Vec3::ZERO,
+        /* velocity= */ Vec3::ZERO,
+        /* radius= */ 0.5,
+        /* desired_speed= */ 1.0,
+        /* max_speed= */ 1.0,
+      );
+      agent.avoidance_tiebreak_seed = seed + index;
+      let id = agents.insert(agent);
+      agent_id_to_agent_node
+        .insert(id, (Vec3::ZERO, NodeRef { island_id, polygon_index: 0 }));
+      id
+    });
+
+    apply_avoidance_to_agents(
+      &mut agents,
+      &agent_id_to_agent_node,
+      /* characters= */ &DenseSlotMap::with_key(),
+      /* character_id_to_nav_mesh_point= */ &BTreeMap::new(),
+      &nav_data,
+      &ArchipelagoOptions::from_agent_radius(0.5),
+      /* delta_time= */ 0.01,
+    );
+
+    let [a, b] = ids.map(|id| *agents.get(id).unwrap().get_desired_velocity());
+    (a, b)
+  }
+
+  let (a, b) = desired_velocities(7);
+  assert_ne!(a, Vec3::ZERO);
+  assert_ne!(b, Vec3::ZERO);
+  assert_ne!(a, b, "the two agents leave in different directions");
+  assert_eq!(desired_velocities(7), (a, b));
+  assert_ne!(desired_velocities(8), (a, b));
 }

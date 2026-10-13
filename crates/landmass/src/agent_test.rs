@@ -1,4 +1,4 @@
-use std::{collections::HashSet, f32::consts::PI, sync::Arc};
+use std::{collections::BTreeSet, f32::consts::PI, sync::Arc};
 
 use glam::{Vec2, Vec3};
 use googletest::{expect_that, expect_true, matchers::*};
@@ -605,8 +605,8 @@ fn nothing_or_clear_path_for_no_target() {
       &agent,
       None,
       None,
-      &HashSet::new(),
-      &HashSet::new()
+      &BTreeSet::new(),
+      &BTreeSet::new()
     ),
     RepathResult::DoNothing
   );
@@ -623,8 +623,8 @@ fn nothing_or_clear_path_for_no_target() {
       &agent,
       None,
       None,
-      &HashSet::new(),
-      &HashSet::new()
+      &BTreeSet::new(),
+      &BTreeSet::new()
     ),
     RepathResult::ClearPathNoTarget,
   );
@@ -650,8 +650,8 @@ fn clears_path_for_missing_nodes() {
       &agent,
       None,
       Some(NodeRef { island_id, polygon_index: 0 }),
-      &HashSet::new(),
-      &HashSet::new(),
+      &BTreeSet::new(),
+      &BTreeSet::new(),
     ),
     RepathResult::ClearPathBadAgent,
   );
@@ -661,8 +661,8 @@ fn clears_path_for_missing_nodes() {
       &agent,
       Some(NodeRef { island_id, polygon_index: 0 }),
       None,
-      &HashSet::new(),
-      &HashSet::new(),
+      &BTreeSet::new(),
+      &BTreeSet::new(),
     ),
     RepathResult::ClearPathBadTarget,
   );
@@ -690,8 +690,8 @@ fn repaths_for_invalid_path_or_nodes_off_path() {
       &agent,
       Some(NodeRef { island_id, polygon_index: 1 }),
       Some(NodeRef { island_id, polygon_index: 3 }),
-      &HashSet::new(),
-      &HashSet::new(),
+      &BTreeSet::new(),
+      &BTreeSet::new(),
     ),
     RepathResult::NeedsRepath,
   );
@@ -713,8 +713,8 @@ fn repaths_for_invalid_path_or_nodes_off_path() {
       &agent,
       Some(NodeRef { island_id, polygon_index: 3 }),
       Some(NodeRef { island_id, polygon_index: 1 }),
-      &HashSet::new(),
-      &HashSet::from([island_id]),
+      &BTreeSet::new(),
+      &BTreeSet::from([island_id]),
     ),
     RepathResult::NeedsRepath
   );
@@ -725,8 +725,8 @@ fn repaths_for_invalid_path_or_nodes_off_path() {
       &agent,
       Some(NodeRef { island_id, polygon_index: 5 }),
       Some(NodeRef { island_id, polygon_index: 1 }),
-      &HashSet::new(),
-      &HashSet::new(),
+      &BTreeSet::new(),
+      &BTreeSet::new(),
     ),
     RepathResult::NeedsRepath,
   );
@@ -737,8 +737,8 @@ fn repaths_for_invalid_path_or_nodes_off_path() {
       &agent,
       Some(NodeRef { island_id, polygon_index: 3 }),
       Some(NodeRef { island_id, polygon_index: 6 }),
-      &HashSet::new(),
-      &HashSet::new(),
+      &BTreeSet::new(),
+      &BTreeSet::new(),
     ),
     RepathResult::NeedsRepath,
   );
@@ -749,8 +749,8 @@ fn repaths_for_invalid_path_or_nodes_off_path() {
       &agent,
       Some(NodeRef { island_id, polygon_index: 1 }),
       Some(NodeRef { island_id, polygon_index: 3 }),
-      &HashSet::new(),
-      &HashSet::new(),
+      &BTreeSet::new(),
+      &BTreeSet::new(),
     ),
     RepathResult::NeedsRepath,
   );
@@ -761,9 +761,9 @@ fn repaths_for_invalid_path_or_nodes_off_path() {
       &agent,
       Some(NodeRef { island_id, polygon_index: 3 }),
       Some(NodeRef { island_id, polygon_index: 1 }),
-      &HashSet::new(),
+      &BTreeSet::new(),
       // This island is not involved in the path, so the path is still valid.
-      &HashSet::from([missing_island_id]),
+      &BTreeSet::from([missing_island_id]),
     ),
     RepathResult::FollowPath(
       PathIndex::from_corridor_index(0, 1),

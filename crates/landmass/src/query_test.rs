@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::BTreeMap, sync::Arc};
 
 use glam::Vec2;
 use googletest::{expect_that, matchers::*};
@@ -262,7 +262,7 @@ fn no_path() {
       &archipelago,
       &start_point,
       &end_point,
-      &HashMap::new(),
+      &BTreeMap::new(),
       PermittedAnimationLinks::All
     ),
     Err(FindPathError::NoPathFound)
@@ -316,7 +316,7 @@ fn finds_path() {
       &archipelago,
       &start_point,
       &end_point,
-      &HashMap::new(),
+      &BTreeMap::new(),
       PermittedAnimationLinks::All
     ),
     Ok(vec![
@@ -399,7 +399,7 @@ fn finds_path_with_override_type_index_costs() {
     &archipelago,
     &start_point,
     &end_point,
-    &HashMap::from([(1, 10.0)]),
+    &BTreeMap::from([(1, 10.0)]),
     PermittedAnimationLinks::All,
   )
   .expect("Path found");
@@ -452,7 +452,7 @@ fn find_path_returns_error_on_invalid_node_cost() {
       &archipelago,
       &start_point,
       &end_point,
-      &HashMap::from([(0, 0.0)]),
+      &BTreeMap::from([(0, 0.0)]),
       PermittedAnimationLinks::All,
     ),
     Err(FindPathError::NonPositiveTypeIndexCost(0, 0.0))
@@ -462,7 +462,7 @@ fn find_path_returns_error_on_invalid_node_cost() {
       &archipelago,
       &start_point,
       &end_point,
-      &HashMap::from([(0, -0.5)]),
+      &BTreeMap::from([(0, -0.5)]),
       PermittedAnimationLinks::All,
     ),
     Err(FindPathError::NonPositiveTypeIndexCost(0, -0.5))
@@ -504,7 +504,7 @@ fn start_and_end_in_same_node() {
     .find_path(
       &start_sampled_point,
       &end_sampled_point,
-      &HashMap::default(),
+      &BTreeMap::default(),
       PermittedAnimationLinks::All,
     )
     .unwrap();
@@ -570,7 +570,7 @@ fn one_animation_link_path() {
     .find_path(
       &start_sampled_point,
       &end_sampled_point,
-      &HashMap::default(),
+      &BTreeMap::default(),
       PermittedAnimationLinks::All,
     )
     .unwrap();

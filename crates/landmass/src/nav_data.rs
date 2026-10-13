@@ -1,5 +1,5 @@
 use std::{
-  collections::{HashMap, HashSet, VecDeque},
+  collections::{BTreeMap, BTreeSet, VecDeque},
   mem::swap,
   ops::{Deref, DerefMut},
   sync::Mutex,
@@ -31,34 +31,35 @@ pub(crate) struct NavigationData<CS: CoordinateSystem> {
   animation_links: DenseSlotMap<AnimationLinkId, AnimationLinkState<CS>>,
   /// The "default" cost of each type index. Missing type indices default to a
   /// cost of 1.0.
-  type_index_to_cost: HashMap<usize, f32>,
+  type_index_to_cost: BTreeMap<usize, f32>,
   /// Whether the navigation data has been mutated since the last update.
   /// Reading should not occur unless the navigation data is not dirty.
   pub(crate) dirty: bool,
   /// Maps a "region id" (consisting of the IslandId and the region in that
   /// island's nav mesh) to its "region number" (the number used in
   /// [`Self::region_connections`]).
-  region_id_to_number: HashMap<(IslandId, usize), usize>,
+  region_id_to_number: BTreeMap<(IslandId, usize), usize>,
   /// Connectedness of regions based on their "region number" in
   /// [`Self::region_id_to_number`].
   region_connections: Mutex<DisjointSet>,
   /// Maps a (root) region number (the key of [`Self::region_connections`]) to
   /// the set of links that **could** connect the regions if agents are allowed
   /// to use them.
-  root_region_number_to_possible_links: HashMap<usize, Vec<PossibleRegionLink>>,
+  root_region_number_to_possible_links:
+    BTreeMap<usize, Vec<PossibleRegionLink>>,
   /// The links that go off the mesh, connecting two node refs.
   pub(crate) off_mesh_links: SlotMap<OffMeshLinkId, OffMeshLink>,
   /// The links that can be taken from a particular node ref.
   pub(crate) node_to_off_mesh_link_ids:
-    HashMap<NodeRef, HashSet<OffMeshLinkId>>,
+    BTreeMap<NodeRef, BTreeSet<OffMeshLinkId>>,
   /// The nodes that have been modified.
-  pub(crate) modified_nodes: HashMap<NodeRef, ModifiedNode>,
+  pub(crate) modified_nodes: BTreeMap<NodeRef, ModifiedNode>,
   /// The islands that have been deleted since the last update.
-  deleted_islands: HashSet<IslandId>,
+  deleted_islands: BTreeSet<IslandId>,
   /// The set of animation links created since the last update.
-  new_animation_links: HashSet<AnimationLinkId>,
+  new_animation_links: BTreeSet<AnimationLinkId>,
   /// The set of animation links deleted since the last update.
-  deleted_animation_links: HashSet<AnimationLinkId>,
+  deleted_animation_links: BTreeSet<AnimationLinkId>,
 }
 
 /// A reference to a node in the navigation data.
@@ -146,19 +147,19 @@ impl<CS: CoordinateSystem> NavigationData<CS> {
     Self {
       islands: DenseSlotMap::with_key(),
       animation_links: DenseSlotMap::with_key(),
-      type_index_to_cost: HashMap::new(),
+      type_index_to_cost: BTreeMap::new(),
       // The navigation data is empty, so there's nothing to update (so not
       // dirty).
       dirty: false,
-      region_id_to_number: HashMap::new(),
+      region_id_to_number: BTreeMap::new(),
       region_connections: Mutex::new(DisjointSet::new()),
-      root_region_number_to_possible_links: HashMap::default(),
+      root_region_number_to_possible_links: BTreeMap::default(),
       off_mesh_links: SlotMap::with_key(),
-      node_to_off_mesh_link_ids: HashMap::new(),
-      modified_nodes: HashMap::new(),
-      deleted_islands: HashSet::new(),
-      new_animation_links: HashSet::new(),
-      deleted_animation_links: HashSet::new(),
+      node_to_off_mesh_link_ids: BTreeMap::new(),
+      modified_nodes: BTreeMap::new(),
+      deleted_islands: BTreeSet::new(),
+      new_animation_links: BTreeSet::new(),
+      deleted_animation_links: BTreeSet::new(),
     }
   }
 
@@ -327,8 +328,8 @@ impl<CS: CoordinateSystem> NavigationData<CS> {
     &mut self,
     edge_link_distance: f32,
     animation_link_distance: f32,
-  ) -> (HashSet<OffMeshLinkId>, HashSet<IslandId>, HashSet<NodeRef>) {
-    let mut dirty_islands = HashSet::new();
+  ) -> (BTreeSet<OffMeshLinkId>, BTreeSet<IslandId>, BTreeSet<NodeRef>) {
+    let mut dirty_islands = BTreeSet::new();
     for (island_id, island) in self.islands.iter_mut() {
       if island.dirty {
         island.dirty = false;
@@ -340,11 +341,11 @@ impl<CS: CoordinateSystem> NavigationData<CS> {
       .deleted_islands
       .union(&dirty_islands)
       .copied()
-      .collect::<HashSet<_>>();
+      .collect::<BTreeSet<_>>();
 
-    let mut dropped_links = HashSet::new();
-    let mut changed_animation_links = HashSet::new();
-    let mut modified_node_refs_to_update = HashSet::new();
+    let mut dropped_links = BTreeSet::new();
+    let mut changed_animation_links = BTreeSet::new();
+    let mut modified_node_refs_to_update = BTreeSet::new();
     if !self.deleted_islands.is_empty()
       || !dirty_islands.is_empty()
       || !self.deleted_animation_links.is_empty()
@@ -468,9 +469,9 @@ impl<CS: CoordinateSystem> NavigationData<CS> {
   fn create_boundary_links(
     &mut self,
     island_bbh: &BoundingBoxHierarchy<IslandId>,
-    dirty_islands: &HashSet<IslandId>,
+    dirty_islands: &BTreeSet<IslandId>,
     edge_link_distance: f32,
-    modified_node_refs_to_update: &mut HashSet<NodeRef>,
+    modified_node_refs_to_update: &mut BTreeSet<NodeRef>,
   ) {
     for &dirty_island_id in dirty_islands.iter() {
       let dirty_island = self.islands.get(dirty_island_id).unwrap();
@@ -515,8 +516,8 @@ impl<CS: CoordinateSystem> NavigationData<CS> {
 
   fn create_off_mesh_links_for_animation_links(
     &mut self,
-    new_animation_links: HashSet<AnimationLinkId>,
-    changed_islands: &HashSet<IslandId>,
+    new_animation_links: BTreeSet<AnimationLinkId>,
+    changed_islands: &BTreeSet<IslandId>,
     island_bbh: &BoundingBoxHierarchy<IslandId>,
     max_vertical_distance: f32,
   ) {
@@ -537,7 +538,10 @@ impl<CS: CoordinateSystem> NavigationData<CS> {
       link: &AnimationLink<CS>,
       islands: &DenseSlotMap<IslandId, Island<CS>>,
       off_mesh_links: &mut SlotMap<OffMeshLinkId, OffMeshLink>,
-      node_to_off_mesh_link_ids: &mut HashMap<NodeRef, HashSet<OffMeshLinkId>>,
+      node_to_off_mesh_link_ids: &mut BTreeMap<
+        NodeRef,
+        BTreeSet<OffMeshLinkId>,
+      >,
     ) {
       let intersection = (
         start_portal.interval.0.max(end_portal.interval.0),
@@ -1053,7 +1057,7 @@ impl<CS: CoordinateSystem> NavigationData<CS> {
 
     // Otherwise, we may need to use some possible links to get to the correct
     // region. Use a BFS to see if we can find the region.
-    let mut seen_regions = HashSet::new();
+    let mut seen_regions = BTreeSet::new();
     let mut region_queue = VecDeque::new();
     seen_regions.insert(region_number_1);
     region_queue.push_back(region_number_1);
@@ -1160,9 +1164,9 @@ impl<CS: CoordinateSystem> NavigationData<CS> {
     &mut self,
     edge_link_distance: f32,
     animation_link_distance: f32,
-  ) -> (HashSet<OffMeshLinkId>, HashSet<IslandId>) {
+  ) -> (BTreeSet<OffMeshLinkId>, BTreeSet<IslandId>) {
     if !self.dirty {
-      return (HashSet::new(), HashSet::new());
+      return (BTreeSet::new(), BTreeSet::new());
     }
     self.dirty = false;
 
@@ -1258,8 +1262,8 @@ fn link_edges_between_islands<CS: CoordinateSystem>(
   island_1_edge_bbh: &BoundingBoxHierarchy<MeshEdgeRef>,
   edge_link_distance: f32,
   off_mesh_links: &mut SlotMap<OffMeshLinkId, OffMeshLink>,
-  node_to_off_mesh_link_ids: &mut HashMap<NodeRef, HashSet<OffMeshLinkId>>,
-  modified_node_refs_to_update: &mut HashSet<NodeRef>,
+  node_to_off_mesh_link_ids: &mut BTreeMap<NodeRef, BTreeSet<OffMeshLinkId>>,
+  modified_node_refs_to_update: &mut BTreeSet<NodeRef>,
 ) {
   let edge_link_distance_squared = edge_link_distance * edge_link_distance;
 
@@ -1336,7 +1340,7 @@ fn world_portal_to_node_portals<CS: CoordinateSystem>(
   portal: (Vec3, Vec3),
   island_bbh: &BoundingBoxHierarchy<IslandId>,
   islands: &DenseSlotMap<IslandId, Island<CS>>,
-  island_to_node_bbh: &mut HashMap<IslandId, BoundingBoxHierarchy<usize>>,
+  island_to_node_bbh: &mut BTreeMap<IslandId, BoundingBoxHierarchy<usize>>,
   max_vertical_distance: f32,
 ) -> Vec<NodePortal> {
   if portal.0 == portal.1 {
